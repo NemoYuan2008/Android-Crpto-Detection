@@ -1,4 +1,5 @@
 import sys
+import struct
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
 
@@ -49,7 +50,12 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.stderr.write('Need an arguement\n')
         sys.exit(1)
+
     # Test case: ~/Desktop/apk/boc/lib/armeabi/libWDMobileKeySDKLib.so
     ana = AnalyseElf(sys.argv[1])
-    value_to_search = 0x00070E15.to_bytes(4, 'little')
+
+    print(ana.analyse_symbol_table())
+
+    ck = [0x00070E15, 0x1C232A31, 0x383F464D, 0x545B6269]
+    value_to_search = struct.pack('<IIII', *ck)
     print(hex(ana.search_bytes_raw(value_to_search)))
