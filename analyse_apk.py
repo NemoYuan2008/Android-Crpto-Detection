@@ -14,10 +14,16 @@ def match_crypto_name(s: str):
             return word
 
 
-class AnalyseApk:
+class AnalyseApkCrypto:
     """ Analyse an APK.
 
         Accessible attributes:
+            app_name: str
+                App name of the APK.
+
+            package_name: str
+                Package name of the APK.
+
             classes_with_crypto_names: dict
                 The keys are crypto names, the values are dictionaries,
                 whose keys are class names, values are a list of method names in the class.
@@ -71,10 +77,10 @@ class AnalyseApk:
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        sys.stderr.write('Need an arguement\n')
+        sys.stderr.write('Need an argument\n')
         sys.exit(1)
     # test case: ~/Desktop/apk/boc.apk
-    ana = AnalyseApk(sys.argv[1])
+    ana = AnalyseApkCrypto(sys.argv[1])
     print(ana.app_name)
     print(ana.package_name)
     print(ana.classes_with_crypto_names)
