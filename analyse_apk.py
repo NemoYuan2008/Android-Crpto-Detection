@@ -1,5 +1,5 @@
 import sys
-from operator import attrgetter
+import operator
 from androguard.misc import AnalyzeAPK
 
 crypto_names = ['sm3', 'sm4', 'aes']
@@ -54,7 +54,7 @@ class AnalyseApk:
             crypto_name = match_crypto_name(c.name)
             if crypto_name:     # Class name matches a crypto name
                 # All method names of the class are included
-                self.classes_with_crypto_names[crypto_name][c.name] = list(map(attrgetter('name'), c.get_methods()))
+                self.classes_with_crypto_names[crypto_name][c.name] = list(map(operator.attrgetter('name'), c.get_methods()))
             else:   # Class name doesn't match
                 found = False
                 for meth in c.get_methods():

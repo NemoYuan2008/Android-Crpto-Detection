@@ -1,5 +1,6 @@
 import sys
 import struct
+import operator
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
 
@@ -19,8 +20,7 @@ class AnalyseElf:
         result = []
         for sec in self.elffile.iter_sections():
             if isinstance(sec, SymbolTableSection):
-                for sym in sec.iter_symbols():
-                    result.append(sym.name)
+                result += list(map(operator.attrgetter('name'), sec.iter_symbols()))
         return result
     
     def search_bytes(self, value: bytes):
