@@ -27,11 +27,11 @@ class AnalyseElf:
         """ Search the value in .rodata, .data, .bss sections.
             Return True on success, False on failure.
         """
-        if self.elffile.get_section_by_name('.rodata').data().find(value) != -1:
+        if value in self.elffile.get_section_by_name('.rodata').data():
             return True
-        if self.elffile.get_section_by_name('.data').data().find(value) != -1:
+        if value in self.elffile.get_section_by_name('.data').data():
             return True
-        if self.elffile.get_section_by_name('.bss').data().find(value) != -1:
+        if value in self.elffile.get_section_by_name('.bss').data():
             return True
         return False
 
@@ -58,4 +58,5 @@ if __name__ == '__main__':
 
     ck = [0x00070E15, 0x1C232A31, 0x383F464D, 0x545B6269]
     value_to_search = struct.pack('<IIII', *ck)
+    print(ana.search_bytes(value_to_search))
     print(hex(ana.search_bytes_raw(value_to_search)))
