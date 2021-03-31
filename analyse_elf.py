@@ -1,20 +1,24 @@
 import sys
 import struct
+import zipfile
 import operator
+from typing import NamedTuple
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
-
+from constants import sm4_sbox, sm4_ck
+from crypto_names import *
 
 class AnalyseElf:
-    def __init__(self, filename):
-        self.filename = filename
-        self._f = open(filename, 'rb')
-        self.elffile = ELFFile(self._f)
-    
-    def __del__(self):
-        self._f.close()
+    def __init__(self, file):
+        self._f = file
+        self.elffile = ELFFile(file)
+        self.symbol_table = self._get_symbol_table()
+        self.symbol_table_with_crypto_name = {}
+        for crypto_name in crypto_names:
+            self.symbol_table_with_crypto_name[crypto_name] = []
+        self._get_symbol_table_with_crypto_name()
 
-    def analyse_symbol_table(self):
+    def _get_symbol_table(self):
         """ Return a list of symbol names in the ELF file.
         """
         result = []
@@ -23,15 +27,26 @@ class AnalyseElf:
                 result += list(map(operator.attrgetter('name'), sec.iter_symbols()))
         return result
     
+    def _get_symbol_table_with_crypto_name(self):
+        for symbol in self.symbol_table:
+            crypto_name = match_crypto_name(symbol)
+            if crypto_name is not None:
+                self.symbol_table_with_crypto_name[crypto_name].append(symbol)
+
     def search_bytes(self, value: bytes):
         """ Search the value in .rodata, .data, .bss sections.
             Return True on success, False on failure.
         """
-        if value in self.elffile.get_section_by_name('.rodata').data():
+        sec = self.elffile.get_section_by_name('.rodata')
+        if sec is not None and value in sec.data():
             return True
-        if value in self.elffile.get_section_by_name('.data').data():
+
+        sec = self.elffile.get_section_by_name('.data')
+        if sec is not None and value in sec.data():
             return True
-        if value in self.elffile.get_section_by_name('.bss').data():
+
+        sec = self.elffile.get_section_by_name('bss')
+        if sec is not None and value in sec.data():
             return True
         return False
 
@@ -45,18 +60,28 @@ class AnalyseElf:
         return buffer.find(value)
 
 
+class ApkElfAnalyseResult(NamedTuple):
+    pass
+
+
+def analyse_apk_elf(filename):
+    with zipfile.ZipFile(filename, 'r') as apk_zip:
+        for name in filter(lambda s: s.startswith('lib') and s.endswith('.so'), apk_zip.namelist):
+            print(name)
+            with apk_zip.open(name) as elffile:
+                ana = AnalyseElf(elffile)
+                print(ana.symbol_table_with_crypto_name)
+                print(ana.search_bytes(sm4_sbox))
+                print(ana.search_bytes(sm4_ck))
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.stderr.write('Need an arguement\n')
         sys.exit(1)
 
-    # Test case: ~/Desktop/apk/boc/lib/armeabi/libWDMobileKeySDKLib.so
-    ana = AnalyseElf(sys.argv[1])
-
-    print(ana.analyse_symbol_table())
-
-    ck = [0x00070E15, 0x1C232A31, 0x383F464D, 0x545B6269]
-    value_to_search = struct.pack('<IIII', *ck)
-    print(ana.search_bytes(value_to_search))
-    print(hex(ana.search_bytes_raw(value_to_search)))
+    for filename in sys.argv[1:]:
+        try:
+            analyse_apk_elf(filename)
+        except zipfile.BadZipFile:
+            sys.stderr.write('Ignoring %s: not an APK file.\n' % filename)
