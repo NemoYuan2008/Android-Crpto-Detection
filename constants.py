@@ -35,3 +35,8 @@ sm4_ck = (
     0x10171E25, 0x2C333A41, 0x484F565D, 0x646B7279
 )
 sm4_ck = struct.pack('<' + 32 * 'I', *sm4_ck)
+
+crypto_constants = {
+    'sm4_sbox': sm4_sbox,
+    'sm4_ck': sm4_ck,
+}

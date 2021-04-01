@@ -2,6 +2,7 @@ import sys
 import operator
 from androguard.misc import AnalyzeAPK
 from crypto_names import *
+from analyse_elf import analyse_apk_elf
 
 
 class AnalyseApkCrypto:
@@ -27,6 +28,7 @@ class AnalyseApkCrypto:
             self.classes_with_crypto[name] = {}
         self._get_classes_with_crypto()
         self._get_classes_with_crypto_strings()
+        self.elf_analyse_result = analyse_apk_elf(self.a.zip)
 
     @property
     def app_name(self):
