@@ -6,6 +6,7 @@ import operator
 from typing import NamedTuple
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
+from elftools.common.exceptions import ELFError
 from constants import crypto_constants
 from crypto_names import *
 
@@ -96,7 +97,11 @@ def analyse_apk_elf(apk_zip: zipfile.ZipFile):
     ret_val = []
     for name in filter(lambda s: s.startswith('lib') and s.endswith('.so'), apk_zip.namelist()):
         with apk_zip.open(name) as elffile:
-            ret_val.append(AnalyseElf(elffile, name).get_analyse_result())
+            try:
+                ret_val.append(AnalyseElf(elffile, name).get_analyse_result())
+            except ELFError:
+                sys.stderr.write('ignoring {}: not an ELF\n'.format(name))
+                continue
     return ret_val
 
 

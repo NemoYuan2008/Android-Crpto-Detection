@@ -2,15 +2,14 @@ import os
 import sys
 import csv
 import argparse
+import signal
 from zipfile import BadZipFile
 from analyse_apk import AnalyseApkCrypto
 from constants import crypto_constants
 from crypto_names import crypto_names
+from timeout import timeout
 
 def write_result(ana: AnalyseApkCrypto, csv_java, csv_elf):
-    csv_java = csv.writer(f_java)
-    csv_elf = csv.writer(f_elf)
-    
     for crypto_name, class_dict in ana.classes_with_crypto.items():
         for class_name, methods in class_dict.items():
             for method in methods:
@@ -23,6 +22,12 @@ def write_result(ana: AnalyseApkCrypto, csv_java, csv_elf):
         csv_elf.writerow([ana.app_name, ana.package_name, result.elf_name] 
         + list(result.symbol_table_with_crypto_name.values())
         + list(result.crypto_constants_results.values()))
+
+import time
+@timeout(300)
+def analyse_and_write_result(apk_file, csv_java, csv_elf):
+    ana = AnalyseApkCrypto(apk_file)
+    write_result(ana, csv_java, csv_elf)
 
 
 if __name__ == '__main__':
@@ -43,9 +48,10 @@ if __name__ == '__main__':
         csv_elf.writerow(['App Name', 'Package Name', 'ELF Name'] + crypto_names + list(crypto_constants.keys()))
 
         for apk_file in args.apk_file:
+            print('Analysing {}'.format(apk_file))
             try:
-                ana = AnalyseApkCrypto(apk_file)
-                write_result(ana, csv_java, csv_elf)
+                analyse_and_write_result(apk_file, csv_java, csv_elf)
+            except KeyboardInterrupt:   # timed out
+                sys.stderr.write('Analysing {} timed out.\n'.format(apk_file))
             except BadZipFile:
                 sys.stderr.write('Ignoring %s: not an APK file.\n' % apk_file)
-                continue
