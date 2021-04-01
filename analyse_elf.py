@@ -95,7 +95,6 @@ class ApkElfAnalyseResult(NamedTuple):
 def analyse_apk_elf(apk_zip: zipfile.ZipFile):
     ret_val = []
     for name in filter(lambda s: s.startswith('lib') and s.endswith('.so'), apk_zip.namelist()):
-        print(name)
         with apk_zip.open(name) as elffile:
             ret_val.append(AnalyseElf(elffile, name).get_analyse_result())
     return ret_val

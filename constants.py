@@ -75,5 +75,5 @@ aes_sbox = struct.pack('<' + 256 * 'B', *aes_sbox)
 crypto_constants = {
     'sm4_sbox': sm4_sbox,
     'sm4_ck': sm4_ck,
-    'aes_sbox': aes_sbox[:4]
+    'aes_sbox': aes_sbox
 }
