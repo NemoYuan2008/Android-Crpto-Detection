@@ -48,6 +48,8 @@ if __name__ == '__main__':
         csv_elf.writerow(['App Name', 'Package Name', 'ELF Name'] + crypto_names + list(crypto_constants.keys()))
 
         for apk_file in args.apk_file:
+            if os.path.isdir(apk_file):
+                continue
             print('Analysing {}'.format(apk_file))
             try:
                 analyse_and_write_result(apk_file, csv_java, csv_elf)
