@@ -8,6 +8,7 @@ from analyse_apk import AnalyseApkCrypto
 from constants import crypto_constants
 from crypto_names import crypto_names
 from timeout import timeout
+from colored_logger import ColoredFormatter
 
 def write_result(ana: AnalyseApkCrypto, csv_java, csv_elf):
     for crypto_name, class_dict in ana.classes_with_crypto.items():
@@ -42,7 +43,9 @@ if __name__ == '__main__':
 
     logger = logging.getLogger('AndroidCryptoDetection')
     logger.setLevel(logging.DEBUG)
-    logger.addHandler(logging.StreamHandler())
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(ColoredFormatter())
+    logger.addHandler(stream_handler)
     logger.addHandler(logging.FileHandler(os.path.join(path, 'analyse_log.log')))
 
     with open(os.path.join(path, 'result_java.csv'), 'w', newline='') as f_java, open(os.path.join(path, 'result_elf.csv'), 'w', newline='') as f_elf:
@@ -59,6 +62,6 @@ if __name__ == '__main__':
             try:
                 analyse_and_write_result(apk_file, csv_java, csv_elf)
             except KeyboardInterrupt:   # timed out
-                logger.error('Analyse of {} timed out.\n'.format(apk_file))
+                logger.error('Analyse of {} timed out'.format(apk_file))
             except BadZipFile:
-                logger.warning('Ignoring {}: not an APK file.\n'.format(apk_file))
+                logger.warning('Ignoring {}: not an APK file'.format(apk_file))
