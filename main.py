@@ -5,6 +5,7 @@ import argparse
 import logging
 from zipfile import BadZipFile
 from analyse_apk import AnalyseApkCrypto
+from analyse_elf import analyse_apk_elf_with_filename
 from constants import crypto_constants
 from crypto_names import crypto_names
 from timeout import timeout
@@ -32,6 +33,14 @@ def analyse_and_write_result(apk_file, csv_java, csv_elf):
     write_result(ana, csv_java, csv_elf)
 
 
+def write_result_elf_only(apk_file, csv_elf):
+    results = analyse_apk_elf_with_filename(apk_file)
+    for result in results:
+        csv_elf.writerow(['', os.path.split(apk_file)[1], result.elf_name] 
+        + list(result.symbol_table_with_crypto_name.values())
+        + list(result.crypto_constants_results.values()))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--elf-only', action='store_true', help='only analyse elf files in APK')
@@ -52,20 +61,32 @@ if __name__ == '__main__':
     handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', '%H:%M:%S'))
     logger.addHandler(handler)
 
-    with open(os.path.join(path, 'result_java.csv'), 'w', newline='') as f_java, open(os.path.join(path, 'result_elf.csv'), 'w', newline='') as f_elf:
+
+    if args.elf_only:
+        logger.warning('ELF-only mode, file name will be used instead of package name')
+    else:
+        f_java = open(os.path.join(path, 'result_java.csv'), 'w', newline='')
         csv_java = csv.writer(f_java)
-        csv_elf = csv.writer(f_elf)
         csv_java.writerow(['App Name', 'Package Name', 'Crypto Name', 'Class', 'Methods', 'Strings'])
-        csv_elf.writerow(['App Name', 'Package Name', 'ELF Name'] + crypto_names + list(crypto_constants.keys()))
+    f_elf = open(os.path.join(path, 'result_elf.csv'), 'w', newline='')
+    csv_elf = csv.writer(f_elf)
+    csv_elf.writerow(['App Name', 'Package Name', 'ELF Name'] + crypto_names + list(crypto_constants.keys()))
 
-        for apk_file in args.apk_file:
-            if os.path.isdir(apk_file):
-                continue
-            logger.info('Analysing {}'.format(apk_file))
+    for apk_file in args.apk_file:
+        if os.path.isdir(apk_file):
+            continue
+        logger.info('Analysing {}'.format(apk_file))
 
+        if args.elf_only:
+            write_result_elf_only(apk_file, csv_elf)
+        else:   # Analyse both Java and native
             try:
                 analyse_and_write_result(apk_file, csv_java, csv_elf)
             except KeyboardInterrupt:   # timed out
                 logger.error('Analyse of {} timed out'.format(apk_file))
             except BadZipFile:
                 logger.warning('Ignoring {}: not an APK file'.format(apk_file))
+
+    if not args.elf_only:
+        f_java.close()
+    f_elf.close()
