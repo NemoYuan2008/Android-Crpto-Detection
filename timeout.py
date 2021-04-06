@@ -1,10 +1,6 @@
-import sys
 import threading
 import _thread
 
-def quit_function(fn_name):
-    print('{0} took too long'.format(fn_name), file=sys.stderr)
-    _thread.interrupt_main()
 
 def timeout(s):
     """
@@ -13,7 +9,7 @@ def timeout(s):
     """
     def outer(fn):
         def inner(*args, **kwargs):
-            timer = threading.Timer(s, quit_function, args=[fn.__name__])
+            timer = threading.Timer(s, _thread.interrupt_main)
             timer.start()
             try:
                 result = fn(*args, **kwargs)

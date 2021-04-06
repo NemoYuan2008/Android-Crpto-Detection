@@ -2,7 +2,7 @@ import os
 import sys
 import csv
 import argparse
-import signal
+import logging
 from zipfile import BadZipFile
 from analyse_apk import AnalyseApkCrypto
 from constants import crypto_constants
@@ -23,7 +23,6 @@ def write_result(ana: AnalyseApkCrypto, csv_java, csv_elf):
         + list(result.symbol_table_with_crypto_name.values())
         + list(result.crypto_constants_results.values()))
 
-import time
 @timeout(300)
 def analyse_and_write_result(apk_file, csv_java, csv_elf):
     ana = AnalyseApkCrypto(apk_file)
@@ -41,6 +40,11 @@ if __name__ == '__main__':
     if not os.path.isdir(path):
         os.mkdir(path)
 
+    logger = logging.getLogger('AndroidCryptoDetection')
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(logging.StreamHandler())
+    logger.addHandler(logging.FileHandler(os.path.join(path, 'analyse_log.log')))
+
     with open(os.path.join(path, 'result_java.csv'), 'w', newline='') as f_java, open(os.path.join(path, 'result_elf.csv'), 'w', newline='') as f_elf:
         csv_java = csv.writer(f_java)
         csv_elf = csv.writer(f_elf)
@@ -50,10 +54,11 @@ if __name__ == '__main__':
         for apk_file in args.apk_file:
             if os.path.isdir(apk_file):
                 continue
-            print('Analysing {}'.format(apk_file))
+            logger.info('Analysing {}'.format(apk_file))
+
             try:
                 analyse_and_write_result(apk_file, csv_java, csv_elf)
             except KeyboardInterrupt:   # timed out
-                sys.stderr.write('Analysing {} timed out.\n'.format(apk_file))
+                logger.error('Analyse of {} timed out.\n'.format(apk_file))
             except BadZipFile:
-                sys.stderr.write('Ignoring %s: not an APK file.\n' % apk_file)
+                logger.warning('Ignoring {}: not an APK file.\n'.format(apk_file))

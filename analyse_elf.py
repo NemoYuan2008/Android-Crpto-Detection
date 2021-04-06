@@ -3,12 +3,15 @@ import sys
 import struct
 import zipfile
 import operator
+import logging
 from typing import NamedTuple
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
 from elftools.common.exceptions import ELFError
 from constants import crypto_constants
 from crypto_names import *
+
+logger = logging.getLogger('AndroidCryptoDetection')
 
 class AnalyseElf:
     """ Analyse an ELF file.
@@ -100,7 +103,7 @@ def analyse_apk_elf(apk_zip: zipfile.ZipFile):
             try:
                 ret_val.append(AnalyseElf(elffile, name).get_analyse_result())
             except ELFError:
-                sys.stderr.write('ignoring {}: not an ELF\n'.format(name))
+                logger.warning('Ignoring {}: not an ELF'.format(name))
                 continue
     return ret_val
 
