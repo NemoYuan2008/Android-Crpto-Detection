@@ -33,6 +33,7 @@ def analyse_and_write_result(apk_file, csv_java, csv_elf):
     write_result(ana, csv_java, csv_elf)
 
 
+@timeout(300)
 def write_result_elf_only(apk_file, csv_elf):
     results = analyse_apk_elf_with_filename(apk_file)
     for result in results:
@@ -77,15 +78,15 @@ if __name__ == '__main__':
             continue
         logger.info('Analysing {}'.format(apk_file))
 
-        if args.elf_only:
-            write_result_elf_only(apk_file, csv_elf)
-        else:   # Analyse both Java and native
-            try:
+        try:
+            if args.elf_only:
+                write_result_elf_only(apk_file, csv_elf)
+            else:   # Analyse both Java and native
                 analyse_and_write_result(apk_file, csv_java, csv_elf)
-            except KeyboardInterrupt:   # timed out
-                logger.error('Analyse of {} timed out'.format(apk_file))
-            except BadZipFile:
-                logger.warning('Ignoring {}: not an APK file'.format(apk_file))
+        except KeyboardInterrupt:   # timed out
+            logger.error('Analyse of {} timed out'.format(apk_file))
+        except BadZipFile:
+            logger.warning('Ignoring {}: not an APK file'.format(apk_file))
 
     if not args.elf_only:
         f_java.close()
