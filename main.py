@@ -3,6 +3,7 @@ import sys
 import csv
 import argparse
 import logging
+from time import time
 from zipfile import BadZipFile
 from analyse_apk import AnalyseApkCrypto
 from analyse_elf import analyse_apk_elf_with_filename
@@ -55,11 +56,12 @@ if __name__ == '__main__':
 
     logger = logging.getLogger('AndroidCryptoDetection')
     logger.setLevel(logging.DEBUG)
+    formatter = ColoredFormatter()
     handler = logging.StreamHandler()
-    handler.setFormatter(ColoredFormatter())
+    handler.setFormatter(formatter)
     logger.addHandler(handler)
     handler = logging.FileHandler(os.path.join(path, 'analyse_log.log'))
-    handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', '%H:%M:%S'))
+    handler.setFormatter(formatter)
     logger.addHandler(handler)
 
 
@@ -72,11 +74,16 @@ if __name__ == '__main__':
     f_elf = open(os.path.join(path, 'result_elf.csv'), 'w', newline='')
     csv_elf = csv.writer(f_elf)
     csv_elf.writerow(['App Name', 'Package Name', 'ELF Name'] + crypto_names + list(crypto_constants.keys()))
+    f_time = open(os.path.join(path, 'result_time.csv'), 'w', newline='')
+    csv_time = csv.writer(f_time)
+    csv_time.writerow(['App File Name', 'Time Consumed/s'])
 
     for apk_file in args.apk_file:
         if os.path.isdir(apk_file):
             continue
         logger.info('Analysing {}'.format(apk_file))
+
+        time_start = time()
 
         try:
             if args.elf_only:
@@ -85,9 +92,17 @@ if __name__ == '__main__':
                 analyse_and_write_result(apk_file, csv_java, csv_elf)
         except KeyboardInterrupt:   # timed out
             logger.error('Analyse of {} timed out'.format(apk_file))
+            csv_time.writerow([os.path.split(apk_file)[1], 'timed out'])
+            continue
         except BadZipFile:
             logger.warning('Ignoring {}: not an APK file'.format(apk_file))
+            continue
+
+        time_consumed = int(time() - time_start)
+        logger.debug('Analyse of {} consumed {} seconds'.format(apk_file, time_consumed))
+        csv_time.writerow([os.path.split(apk_file)[1], time_consumed])
 
     if not args.elf_only:
         f_java.close()
     f_elf.close()
+    f_time.close()
