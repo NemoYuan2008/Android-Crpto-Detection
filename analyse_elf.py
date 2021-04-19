@@ -1,4 +1,5 @@
 import os
+import io
 import sys
 import struct
 import zipfile
@@ -100,11 +101,12 @@ def analyse_apk_elf(apk_zip: zipfile.ZipFile):
     ret_val = []
     for name in filter(lambda s: s.startswith('lib') and s.endswith('.so'), apk_zip.namelist()):
         with apk_zip.open(name) as elffile:
-            try:
-                ret_val.append(AnalyseElf(elffile, name).get_analyse_result())
-            except ELFError:
-                logger.warning('Ignoring {}: not an ELF'.format(name))
-                continue
+            with io.BytesIO(elffile.read()) as elffile:
+                try:
+                    ret_val.append(AnalyseElf(elffile, name).get_analyse_result())
+                except ELFError:
+                    logger.warning('Ignoring {}: not an ELF'.format(name))
+                    continue
     return ret_val
 
 
