@@ -97,6 +97,9 @@ if __name__ == '__main__':
         except BadZipFile:
             logger.warning('Ignoring {}: not an APK file'.format(apk_file))
             continue
+        except Exception as e: # Handle unexpected exceptions raised by androguard
+            logger.critical(e)
+            continue
 
         time_consumed = int(time() - time_start)
         logger.debug('Analyse of {} consumed {} seconds'.format(apk_file, time_consumed))
