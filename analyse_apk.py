@@ -1,8 +1,12 @@
 import sys
 import operator
+import logging
 from androguard.misc import AnalyzeAPK
 from crypto_names import *
 from analyse_elf import analyse_apk_elf
+
+
+logger = logging.getLogger('AndroidCryptoDetection')
 
 
 class AnalyseApkCrypto:
@@ -29,14 +33,13 @@ class AnalyseApkCrypto:
         self._get_classes_with_crypto()
         self._get_classes_with_crypto_strings()
         self.elf_analyse_result = analyse_apk_elf(self.a.zip)
-
-    @property
-    def app_name(self):
-        return self.a.get_app_name()
-
-    @property
-    def package_name(self):
-        return self.a.get_package()
+        self.package_name = self.a.get_package()
+        try:
+            self.app_name = self.a.get_app_name()
+        except:
+            # If we can't get app name, use package name instead
+            logger.warning('Failed to get app name, using package name instead.')
+            self.app_name = self.package_name
     
     def _get_classes_methods(self):
         results = {}
