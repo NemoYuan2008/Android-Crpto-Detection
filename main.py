@@ -14,13 +14,13 @@ from colored_logger import ColoredFormatter
 
 
 def write_result(ana: AnalyseApkCrypto, csv_java, csv_elf):
-    for crypto_name, class_dict in ana.classes_with_crypto.items():
-        for class_name, methods in class_dict.items():
-            for method in methods:
-                if isinstance(method, tuple):
-                    csv_java.writerow([ana.app_name, ana.package_name, crypto_name, class_name, method[0], method[1]])
-                else:
-                    csv_java.writerow([ana.app_name, ana.package_name, crypto_name, class_name, method])
+    for crypto_name, meth_dict in ana.methods_with_crypto.items():
+        for meth_name, meth_info in meth_dict.items():
+            if not meth_info.strings:
+                meth_info.strings = ''
+            csv_java.writerow([ana.app_name, ana.package_name, crypto_name, 
+                               meth_info.class_name, meth_name, meth_info.strings]
+                               + list(meth_info.crypto_constants_results.values()))
     
     for result in ana.elf_analyse_result:
         csv_elf.writerow([ana.app_name, ana.package_name, result.elf_name] 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     else:
         f_java = open(os.path.join(path, 'result_java.csv'), 'w', newline='')
         csv_java = csv.writer(f_java)
-        csv_java.writerow(['App Name', 'Package Name', 'Crypto Name', 'Class', 'Methods', 'Strings'])
+        csv_java.writerow(['App Name', 'Package Name', 'Crypto Name', 'Class', 'Methods', 'Strings'] + list(crypto_constants.keys()))
     f_elf = open(os.path.join(path, 'result_elf.csv'), 'w', newline='')
     csv_elf = csv.writer(f_elf)
     csv_elf.writerow(['App Name', 'Package Name', 'ELF Name'] + crypto_names + list(crypto_constants.keys()))
