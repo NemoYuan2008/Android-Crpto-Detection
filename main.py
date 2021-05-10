@@ -28,13 +28,13 @@ def write_result(ana: AnalyseApkCrypto, csv_java, csv_elf):
         + list(result.crypto_constants_results.values()))
 
 
-@timeout(300)
+@timeout(600)
 def analyse_and_write_result(apk_file, csv_java, csv_elf):
     ana = AnalyseApkCrypto(apk_file)
     write_result(ana, csv_java, csv_elf)
 
 
-@timeout(300)
+@timeout(600)
 def write_result_elf_only(apk_file, csv_elf):
     results = analyse_apk_elf_with_filename(apk_file)
     for result in results:
