@@ -95,6 +95,9 @@ sm3_iv = (
 )
 sm3_iv = struct.pack('<' + 8 * 'I', *sm3_iv)
 
+sm3_t0 = struct.pack('<I', 0x79cc4519)
+sm3_t16 = struct.pack('<I', 0x7a879d8a)
+
 aes_sbox = (
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5,
     0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -132,13 +135,9 @@ aes_sbox = (
 aes_sbox = struct.pack('<' + 256 * 'B', *aes_sbox)
 
 crypto_constants = {
-    'sm4_sbox': sm4_sbox,
-    'sm4_ck': sm4_ck,
-    'sm4_fk': sm4_fk,
-    'sm3_iv': sm3_iv,
     'aes_sbox': aes_sbox,
 }
 
 for name, var in locals().copy().items():
-    if 'sm2' in name:
+    if 'sm2' in name or 'sm3' in name or 'sm4' in name:
         crypto_constants[name] = var
