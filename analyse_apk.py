@@ -21,7 +21,7 @@ class MethodInfo:
         self.crypto_constants_results = {}
         for name, constant in crypto_constants.items():
             self.crypto_constants_results[name] = self.search_bytes(meth, constant)
-    
+
     @staticmethod
     def search_bytes(meth, value: bytes):
         # methods returned from StringAnasis is not MethodClassAnalysis,
@@ -33,8 +33,10 @@ class MethodInfo:
             code = meth.get_method().get_code()
         else:
             code = meth.get_code()
+        
         if code:
             return value in code.get_bc().get_raw()
+        return False
 
 
 class AnalyseApkCrypto:
@@ -103,7 +105,6 @@ class AnalyseApkCrypto:
             crypto_name = match_crypto_name(s_value, exclude_cert=True)
             if crypto_name:
                 for c, meth in s.get_xref_from():
-                    print(s_value, c.name, meth.name)
                     if meth.name not in self.methods_with_crypto[crypto_name]:
                         self.methods_with_crypto[crypto_name][meth.name] = MethodInfo(meth, c.name)
                     self.methods_with_crypto[crypto_name][meth.name].strings.add(s_value)
