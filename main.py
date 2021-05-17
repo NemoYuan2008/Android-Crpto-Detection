@@ -10,7 +10,7 @@ from analyse_elf import analyse_apk_elf_with_filename
 from constants import crypto_constants
 from crypto_names import crypto_names
 from timeout import timeout
-from colored_logger import ColoredFormatter
+from colored_logger import file_formatter, terminal_formatter
 
 
 def write_result(ana: AnalyseApkCrypto, csv_java, csv_elf):
@@ -56,12 +56,11 @@ if __name__ == '__main__':
 
     logger = logging.getLogger('AndroidCryptoDetection')
     logger.setLevel(logging.DEBUG)
-    formatter = ColoredFormatter()
     handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
+    handler.setFormatter(terminal_formatter)
     logger.addHandler(handler)
     handler = logging.FileHandler(os.path.join(path, 'analyse_log.log'))
-    handler.setFormatter(formatter)
+    handler.setFormatter(file_formatter)
     logger.addHandler(handler)
 
 

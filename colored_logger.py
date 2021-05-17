@@ -23,3 +23,7 @@ class ColoredFormatter(logging.Formatter):
         log_fmt = self.FORMATS[record.levelno]
         formatter = logging.Formatter(log_fmt, datefmt='%H:%M:%S')
         return formatter.format(record)
+
+
+terminal_formatter = ColoredFormatter()
+file_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
