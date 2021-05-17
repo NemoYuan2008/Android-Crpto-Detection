@@ -1,49 +1,17 @@
 import os
-import sys
 import csv
 import argparse
 import logging
 from time import time
 from zipfile import BadZipFile
-from analyse_apk import AnalyseApkCrypto
-from analyse_elf import analyse_apk_elf_with_filename
 from constants import crypto_constants
 from crypto_names import crypto_names
-from timeout import timeout
 from colored_logger import file_formatter, terminal_formatter
-
-
-def write_result(ana: AnalyseApkCrypto, csv_java, csv_elf):
-    for crypto_name, meth_dict in ana.methods_with_crypto.items():
-        for meth_name, meth_info in meth_dict.items():
-            if not meth_info.strings:
-                meth_info.strings = ''
-            csv_java.writerow([ana.app_name, ana.package_name, crypto_name, 
-                               meth_info.class_name, meth_name, meth_info.strings]
-                               + list(meth_info.crypto_constants_results.values()))
-    
-    for result in ana.elf_analyse_result:
-        csv_elf.writerow([ana.app_name, ana.package_name, result.elf_name] 
-        + list(result.symbol_table_with_crypto_name.values())
-        + list(result.crypto_constants_results.values()))
-
-
-@timeout(600)
-def analyse_and_write_result(apk_file, csv_java, csv_elf):
-    ana = AnalyseApkCrypto(apk_file)
-    write_result(ana, csv_java, csv_elf)
-
-
-@timeout(600)
-def write_result_elf_only(apk_file, csv_elf):
-    results = analyse_apk_elf_with_filename(apk_file)
-    for result in results:
-        csv_elf.writerow(['', os.path.split(apk_file)[1], result.elf_name] 
-        + list(result.symbol_table_with_crypto_name.values())
-        + list(result.crypto_constants_results.values()))
+from write_result import *
 
 
 if __name__ == '__main__':
+    # Parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--elf-only', action='store_true', help='only analyse elf files in APK')
     parser.add_argument('apk_file', nargs='+', help='APK files to be analysed')
@@ -54,6 +22,7 @@ if __name__ == '__main__':
     if not os.path.isdir(path):
         os.mkdir(path)
 
+    # Setup the logger
     logger = logging.getLogger('AndroidCryptoDetection')
     logger.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
@@ -63,7 +32,7 @@ if __name__ == '__main__':
     handler.setFormatter(file_formatter)
     logger.addHandler(handler)
 
-
+    # Open CSV files
     if args.elf_only:
         logger.warning('ELF-only mode, file name will be used instead of package name')
     else:
@@ -77,6 +46,7 @@ if __name__ == '__main__':
     csv_time = csv.writer(f_time)
     csv_time.writerow(['App File Name', 'Time Consumed/s'])
 
+    # Run the analysis
     for apk_file in args.apk_file:
         if os.path.isdir(apk_file):
             continue
@@ -86,7 +56,7 @@ if __name__ == '__main__':
 
         try:
             if args.elf_only:
-                write_result_elf_only(apk_file, csv_elf)
+                analyse_and_write_result_elf_only(apk_file, csv_elf)
             else:   # Analyse both Java and native
                 analyse_and_write_result(apk_file, csv_java, csv_elf)
         except KeyboardInterrupt:   # timed out
@@ -96,7 +66,7 @@ if __name__ == '__main__':
         except BadZipFile:
             logger.warning('Ignoring {}: not an APK file'.format(apk_file))
             continue
-        except Exception as e: # Handle unexpected exceptions raised by androguard
+        except Exception as e:      # Handle unexpected exceptions raised by androguard
             logger.critical(e)
             continue
 
