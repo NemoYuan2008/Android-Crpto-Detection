@@ -1,5 +1,4 @@
 import sys
-import operator
 import logging
 from androguard.misc import AnalyzeAPK
 from androguard.core.analysis.analysis import MethodClassAnalysis
@@ -49,11 +48,13 @@ class AnalyseApkCrypto:
             package_name: str
                 Package name of the APK.
 
-            classes_with_crypto: dict
+            classes_with_crypto: dict[str, dict[str, MethInfo]]
                 The keys are crypto names, the values are dictionaries,
-                whose keys are class names, values are dictionaries,
-                whose keys are method analysis, values are a list of strings.
+                whose keys are method names, values are MethInfo objects.
                 Only classes or methods that contains crypto names are included.
+            
+            elf_analyse_result: list[ApkElfAnalyseResult]
+                A list of ApkElfAnalyseResult
     """
     def __init__(self, filename):
         self.a, self.d, self.dx = AnalyzeAPK(filename)
@@ -63,8 +64,8 @@ class AnalyseApkCrypto:
         for name in crypto_names:
             # self.classes_with_crypto[name] = {}
             self.methods_with_crypto[name] = {}
-        self._get_classes_with_crypto()
-        self._get_classes_with_crypto_strings()
+        self._get_methods_with_crypto()
+        self._get_methods_with_crypto_strings()
         self.elf_analyse_result = analyse_apk_elf(self.a.zip)
         self.package_name = self.a.get_package()
         try:
@@ -83,7 +84,7 @@ class AnalyseApkCrypto:
                 results[c.name].append(meth.name)
         return results
 
-    def _get_classes_with_crypto(self):
+    def _get_methods_with_crypto(self):
         classes = self.dx.get_classes()
         for c in classes:
             crypto_name = match_crypto_name(c.name)
@@ -99,7 +100,7 @@ class AnalyseApkCrypto:
                         if meth.name not in self.methods_with_crypto[crypto_name]:
                             self.methods_with_crypto[crypto_name][meth.name] = MethodInfo(meth, c.name)
 
-    def _get_classes_with_crypto_strings(self):
+    def _get_methods_with_crypto_strings(self):
         for s in self.dx.get_strings():
             s_value = s.get_orig_value()
             crypto_name = match_crypto_name(s_value, exclude_cert=True)
