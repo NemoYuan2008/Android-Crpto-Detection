@@ -135,7 +135,7 @@ aes_sbox = (
 aes_sbox = struct.pack('<' + 256 * 'B', *aes_sbox)
 
 crypto_constants = {
-    'aes_sbox': aes_sbox,
+    # 'aes_sbox': aes_sbox,
 }
 
 for name, var in locals().copy().items():

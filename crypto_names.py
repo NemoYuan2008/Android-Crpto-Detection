@@ -1,6 +1,6 @@
 import re
 
-crypto_names = ['sm2', 'sm3', 'sm4', 'sms4', 'aes']
+crypto_names = ['sm2', 'sm3', 'sm4', 'sms4']
 regex_base64 = re.compile(r'^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$')
 
 
