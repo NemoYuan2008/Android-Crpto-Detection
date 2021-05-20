@@ -1,9 +1,8 @@
 import sys
 import logging
-import abc
 from androguard.misc import AnalyzeAPK
-from androguard.core.analysis.analysis import ClassAnalysis, MethodClassAnalysis
-from crypto_names import crypto_names, match_crypto_name
+from androguard.core.analysis.analysis import ClassAnalysis
+from crypto_names import match_crypto_name
 from analyse_elf import analyse_apk_elf
 from constants import crypto_constants
 
@@ -165,8 +164,11 @@ class AnalyseApkCrypto:
     def __init__(self, filename):
         self.a, self.d, self.dx = AnalyzeAPK(filename)
         self.classes_with_crypto = {}
-        self.elf_analyse_result = analyse_apk_elf(self.a.zip)
+        self.elf_analyse_result, self.pack_elf = analyse_apk_elf(self.a.zip)
         self.package_name = self.a.get_package()
+        self.method_cnt = len(list(self.dx.get_methods()))
+        self.class_cnt = len(list(self.dx.get_classes()))
+        self.elf_cnt = len(self.elf_analyse_result)
 
         try:
             self.app_name = self.a.get_app_name()

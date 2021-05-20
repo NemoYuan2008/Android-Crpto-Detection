@@ -1,7 +1,6 @@
 import os
 import io
 import sys
-import struct
 import zipfile
 import operator
 import logging
@@ -96,9 +95,25 @@ class ApkElfAnalyseResult(NamedTuple):
     symbol_table_with_crypto_name: dict
     crypto_constants_results: dict
 
+pack_elf_name = {
+    "libchaosvmp.so", "libddog.so", "libfdog.so",
+    "libexec.so", "libexecmain.so", "ijiami.so",
+    "libsecexe.so", "libsecmain.so", "libDexHelper.so",
+    "libprotectClass.so", "libjiagu.so", "libjiagu_art.so", "libjiagu_x86.so",
+    "libegis.so", "libNSaferOnly.so",
+    "libnqshield.so",
+    "libbaiduprotect.so",
+    "libshellx-2.10.6.0.so", "libBugly.so", "libtup.so", "libexec.so", "libshell.so",
+    "aliprotect.so", "libsgmain.so", "libsgsecuritybody.so",
+    "libtosprotection.armeabi.so", "libtosprotection.armeabi-v7a.so", "libtosprotection.x86.so",
+    "libnesec.so",
+    "libAPKProtect.so",
+    "libkwscmm.so", "libkwscr.so", "libkwslinker.so"
+}
 
 def analyse_apk_elf(apk_zip: zipfile.ZipFile):
     ret_val = []
+    pack_elf = []
     for name in filter(lambda s: s.startswith('lib') and s.endswith('.so'), apk_zip.namelist()):
         with apk_zip.open(name) as elffile:
             with io.BytesIO(elffile.read()) as elffile:
@@ -107,7 +122,10 @@ def analyse_apk_elf(apk_zip: zipfile.ZipFile):
                 except ELFError:
                     logger.warning('Ignoring {}: not an ELF'.format(name))
                     continue
-    return ret_val
+        name = os.path.split(name)[1]
+        if name in pack_elf_name or 'libshellx' in name:
+            pack_elf.append(name)
+    return ret_val, pack_elf
 
 
 def analyse_apk_elf_with_filename(filename):
